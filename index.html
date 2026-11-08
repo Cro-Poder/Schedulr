@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Schedulr — CPU Scheduling Visualizer</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- ─── Header ──────────────────────────────────────────── -->
+    <header class="app-header">
+      <div class="header-main">
+        <h1 class="app-title">Schedulr</h1>
+        <p class="app-subtitle">CPU Scheduling Algorithm Visualizer</p>
+      </div>
+      <div class="header-actions">
+        <button id="theme-toggle-btn" class="btn btn-theme" aria-label="Toggle visual theme">
+          <span id="theme-text">Light Theme</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ─── Preset Selector ─────────────────────────────────── -->
+    <section class="panel">
+      <div class="panel-title-bar">Preset Workloads</div>
+      <div class="panel-body preset-bar">
+        <label for="preset-select">Load preset:</label>
+        <select id="preset-select" class="select-input">
+          <option value="convoy">Convoy Effect</option>
+          <option value="idleGaps">Idle Gaps</option>
+          <option value="mixed">Mixed Workload</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- ─── Process Management ──────────────────────────────── -->
+    <section class="panel">
+      <div class="panel-title-bar">Process Table</div>
+      <div class="panel-body">
+        <div id="validation-msg" class="validation-msg" style="display:none;"></div>
+        <div class="table-scroll">
+          <table class="data-table" id="process-table">
+            <thead>
+              <tr>
+                <th>PID</th>
+                <th>Arrival Time</th>
+                <th>Burst Time</th>
+                <th>Priority</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="process-table-body"></tbody>
+          </table>
+        </div>
+        <div class="table-actions">
+          <button id="add-process-btn" class="btn btn-primary">Add Process</button>
+          <span class="process-count-hint">(max 20)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Scheduling Configuration ────────────────────────── -->
+    <section class="panel">
+      <div class="panel-title-bar">Scheduling Configuration</div>
+      <div class="panel-body config-bar">
+        <div class="config-group">
+          <label for="algorithm-select">Algorithm:</label>
+          <select id="algorithm-select" class="select-input">
+            <option value="fcfs">FCFS — First Come First Serve</option>
+            <option value="sjf">SJF — Shortest Job First</option>
+            <option value="srtf">SRTF — Shortest Remaining Time First</option>
+            <option value="rr">Round Robin</option>
+            <option value="priority">Priority Scheduling</option>
+          </select>
+        </div>
+        <div class="config-group" id="quantum-group" style="display:none;">
+          <label for="quantum-input">Time Quantum:</label>
+          <input type="number" id="quantum-input" class="number-input" value="2" min="1" aria-label="Time Quantum">
+        </div>
+        <div class="config-group">
+          <button id="run-btn" class="btn btn-primary">Run Simulation</button>
+          <button id="compare-btn" class="btn btn-secondary">Compare All</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Gantt Chart ─────────────────────────────────────── -->
+    <section class="panel" id="gantt-section" style="display:none;">
+      <div class="panel-title-bar">Gantt Chart</div>
+      <div class="panel-body">
+        <div class="gantt-scroll" id="gantt-container"></div>
+
+        <!-- Animation Controls -->
+        <div class="animation-controls">
+          <button id="play-btn" class="btn btn-anim" aria-label="Play">Play</button>
+          <button id="pause-btn" class="btn btn-anim" aria-label="Pause">Pause</button>
+          <button id="step-btn" class="btn btn-anim" aria-label="Step Forward">Step</button>
+          <button id="reset-btn" class="btn btn-anim" aria-label="Reset">Reset</button>
+          <div class="speed-control">
+            <label for="speed-slider">Speed:</label>
+            <input type="range" id="speed-slider" min="0.25" max="3" step="0.25" value="1" aria-label="Animation Speed">
+            <span id="speed-display" class="speed-value">1.00x</span>
+          </div>
+        </div>
+
+        <!-- Ready Queue -->
+        <div class="ready-queue-panel">
+          <div class="rq-title">Ready Queue</div>
+          <div id="ready-queue-container" class="rq-body"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Results ─────────────────────────────────────────── -->
+    <section class="panel" id="results-section" style="display:none;">
+      <div class="panel-title-bar">Results</div>
+      <div class="panel-body">
+        <div id="metric-panels" class="metric-panels-row"></div>
+        <div class="table-scroll">
+          <table class="data-table" id="results-table">
+            <thead>
+              <tr>
+                <th>PID</th>
+                <th>Arrival</th>
+                <th>Burst</th>
+                <th>Priority</th>
+                <th>Completion</th>
+                <th>Turnaround</th>
+                <th>Waiting</th>
+                <th>Response</th>
+              </tr>
+            </thead>
+            <tbody id="results-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Compare All ─────────────────────────────────────── -->
+    <section class="panel" id="comparison-section" style="display:none;">
+      <div class="panel-title-bar">Algorithm Comparison</div>
+      <div class="panel-body">
+        <div class="table-scroll">
+          <table class="data-table" id="comparison-table">
+            <thead>
+              <tr>
+                <th>Algorithm</th>
+                <th>Avg Waiting</th>
+                <th>Avg Turnaround</th>
+                <th>Avg Response</th>
+                <th>CPU Util.</th>
+                <th>Throughput</th>
+              </tr>
+            </thead>
+            <tbody id="comparison-table-body"></tbody>
+          </table>
+        </div>
+        <div id="comparison-chart-container" class="comparison-chart-container"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
+
